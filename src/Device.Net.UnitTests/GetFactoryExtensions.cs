@@ -10,6 +10,8 @@ namespace Device.Net.UnitTests
 {
     public static class GetFactoryExtensions
     {
+        private const uint FILE_FLAG_OVERLAPPED = 0x40000000;
+
         public static IDeviceFactory GetUsbDeviceFactory(
             this FilterDeviceDefinition filterDeviceDefinition,
             ILoggerFactory loggerFactory,

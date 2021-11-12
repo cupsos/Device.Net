@@ -117,8 +117,20 @@ namespace Hid.Net.Windows
                           $"{nameof(DeviceId)} must be specified before {nameof(InitializeAsync)} can be called.");
                   }
 
-                  _readSafeFileHandle = _hidService.CreateReadConnection(DeviceId, FileAccessRights.GenericRead);
-                  _writeSafeFileHandle = _hidService.CreateWriteConnection(DeviceId);
+                  _readSafeFileHandle =
+                    _createReadConnection?.Invoke(
+                        _hidService,
+                        DeviceId,
+                        FileAccessRights.GenericRead,
+                        APICalls.FileShareRead | APICalls.FileShareWrite,
+                        APICalls.OpenExisting) ?? _hidService.CreateReadConnection(DeviceId, FileAccessRights.GenericRead);
+                  _writeSafeFileHandle =
+                    _createWriteConnection?.Invoke(
+                        _hidService,
+                        DeviceId,
+                        FileAccessRights.GenericRead | FileAccessRights.GenericWrite,
+                        APICalls.FileShareRead | APICalls.FileShareWrite,
+                        APICalls.OpenExisting) ?? _hidService.CreateWriteConnection(DeviceId);
 
                   if (_readSafeFileHandle.IsInvalid)
                   {

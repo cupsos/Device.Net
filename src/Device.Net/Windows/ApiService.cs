@@ -28,9 +28,52 @@ namespace Device.Net.Windows
         #endregion
 
         #region Implementation
-        public SafeFileHandle CreateWriteConnection(string deviceId) => CreateConnection(deviceId, FileAccessRights.GenericRead | FileAccessRights.GenericWrite, APICalls.FileShareRead | APICalls.FileShareWrite, APICalls.OpenExisting);
+        public SafeFileHandle CreateFile(string lpFileName, FileAccessRights dwDesiredAccess, uint dwShareMode, IntPtr lpSecurityAttributes, uint dwCreationDisposition, uint dwFlagsAndAttributes, IntPtr hTemplateFile)
+        {
+            const string LOG_FORMAT =
+                "Calling {call} Area: {area} for DeviceId: {lpFileName}. " +
+                "Desired Access: {dwDesiredAccess}. " +
+                "Share mode: {dwShareMode}. " +
+                "Creation Disposition: {dwCreationDisposition}. " +
+                "File Flag: {dwFlagsAndAttributes}";
+            Logger.LogInformation(
+                LOG_FORMAT,
+                nameof(APICalls.CreateFile),
+                nameof(ApiService),
+                lpFileName,
+                dwDesiredAccess,
+                dwShareMode,
+                dwCreationDisposition,
+                dwFlagsAndAttributes);
+            return APICalls.CreateFile(
+                lpFileName,
+                dwDesiredAccess,
+                dwShareMode,
+                lpSecurityAttributes,
+                dwCreationDisposition,
+                dwFlagsAndAttributes,
+                hTemplateFile);
+        }
 
-        public SafeFileHandle CreateReadConnection(string deviceId, FileAccessRights desiredAccess) => CreateConnection(deviceId, desiredAccess, APICalls.FileShareRead | APICalls.FileShareWrite, APICalls.OpenExisting);
+        public SafeFileHandle CreateWriteConnection(string deviceId) =>
+            CreateFile(
+                deviceId,
+                FileAccessRights.GenericRead | FileAccessRights.GenericWrite,
+                APICalls.FileShareRead | APICalls.FileShareWrite,
+                IntPtr.Zero,
+                APICalls.OpenExisting,
+                FILE_FLAG_OVERLAPPED,
+                IntPtr.Zero);
+
+        public SafeFileHandle CreateReadConnection(string deviceId, FileAccessRights desiredAccess) =>
+            CreateFile(
+                deviceId,
+                desiredAccess,
+                APICalls.FileShareRead | APICalls.FileShareWrite,
+                IntPtr.Zero,
+                APICalls.OpenExisting,
+                FILE_FLAG_OVERLAPPED,
+                IntPtr.Zero);
 
         public bool AGetCommState(SafeFileHandle hFile, ref Dcb lpDCB) => GetCommState(hFile, ref lpDCB);
         public bool APurgeComm(SafeFileHandle hFile, int dwFlags) => PurgeComm(hFile, dwFlags);
@@ -38,14 +81,6 @@ namespace Device.Net.Windows
         public bool AWriteFile(SafeFileHandle hFile, byte[] lpBuffer, int nNumberOfBytesToWrite, out int lpNumberOfBytesWritten, int lpOverlapped) => WriteFile(hFile, lpBuffer, nNumberOfBytesToWrite, out lpNumberOfBytesWritten, lpOverlapped);
         public bool AReadFile(SafeFileHandle hFile, byte[] lpBuffer, int nNumberOfBytesToRead, out uint lpNumberOfBytesRead, int lpOverlapped) => ReadFile(hFile, lpBuffer, nNumberOfBytesToRead, out lpNumberOfBytesRead, lpOverlapped);
         public bool ASetCommState(SafeFileHandle hFile, [In] ref Dcb lpDCB) => SetCommState(hFile, ref lpDCB);
-        #endregion
-
-        #region Private Methods
-        private SafeFileHandle CreateConnection(string deviceId, FileAccessRights desiredAccess, uint shareMode, uint creationDisposition)
-        {
-            Logger.LogInformation("Calling {call} Area: {area} for DeviceId: {deviceId}. Desired Access: {desiredAccess}. Share mode: {shareMode}. Creation Disposition: {creationDisposition}", nameof(APICalls.CreateFile), nameof(ApiService), deviceId, desiredAccess, shareMode, creationDisposition);
-            return APICalls.CreateFile(deviceId, desiredAccess, shareMode, IntPtr.Zero, creationDisposition, FILE_FLAG_OVERLAPPED, IntPtr.Zero);
-        }
         #endregion
 
         #region DLL Imports
